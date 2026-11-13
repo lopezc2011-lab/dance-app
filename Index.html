@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fall Ball #101</title>
+<style>
+  :root {
+    --bg: #000000;
+    --card: #141418;
+    --border: #2a2a32;
+    --text: #ffffff;
+    --muted: #9aa0a6;
+    --accent: #60a5fa;
+    --streak: #fbbf24;
+    --streak-bg: rgba(251, 191, 36, 0.16);
+    --break: #34d399;
+    --break-bg: rgba(52, 211, 153, 0.15);
+    --stay: #f97316;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Optimized for circular & square watch screens + phones */
+  .watch-wrap {
+    width: 100%;
+    max-width: 380px;
+    padding: 14px 12px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  .top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding-top: 4px;
+  }
+  .mode-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.68rem;
+    cursor: pointer;
+  }
+  .mode-pill.live {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.5);
+  }
+
+  /* Current Heat Card */
+  .current-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 22px;
+    padding: 10px 10px 12px;
+    position: relative;
+  }
+  .current-card.on-streak {
+    border-color: var(--streak);
+  }
+  .current-card.on-break {
+    border-color: var(--break);
+  }
+  .heat-header {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .heat-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+  .heat-time {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .partner-name {
+    font-size: 1.38rem;
+    font-weight: 900;
+    line-height: 1.15;
+    margin: 3px 0;
+    color: #ffffff;
+  }
+  .dance-style {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+  .level-tag {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* Consecutive Partner Streak Banner */
+  .streak-badge {
+    margin-top: 7px;
+    display: inline-block;
+    background: var(--streak-bg);
+    color: var(--streak);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: 12px;
+    padding: 4px 9px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+  .break-badge {
+    margin-top: 7px;
+    display: inline-block;
+    background: var(--break-bg);
+    color: var(--break);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    border-radius: 12px;
+    padding: 4px 9px;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  /* Up Next Box */
+  .next-card {
+    background: #0d0d11;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 8px 10px;
+  }
+  .next-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 800;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .next-label.same-partner {
+    color: var(--stay);
+  }
+  .next-main {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #f1f5f9;
+  }
+  .next-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* Big Watch-Friendly Tap Controls */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  button.nav-btn {
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 11px 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+  }
+  button.nav-btn.primary {
+    background: #2563eb;
+    border-color: #3b82f6;
+  }
+  button.nav-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* Live Offset Controls (hidden unless Live Mode is active) */
+  .offset-bar {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .offset-bar.show { display: flex; }
+  .mini-btn {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px 7px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* Jump / All Heats Drawer */
+  details {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  summary {
+    cursor: pointer;
+    padding: 4px;
+    font-weight: 700;
+    list-style: none;
+  }
+  .heat-list {
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+  .heat-item {
+    background: var(--card);
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+  }
+  .heat-item.active {
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="watch-wrap">
+  <div class="top-bar">
+    <span id="progressText">1 / 90</span>
+    <span class="mode-pill" id="modeBtn" onclick="toggleLiveMode()">TAP MODE</span>
+  </div>
+
+  <div class="current-card" id="currentCard">
+    <div class="heat-header">
+      <span class="heat-num" id="heatNum">HEAT 1</span>
+      <span class="heat-time" id="heatTime">11:15 AM</span>
+    </div>
+    <div class="partner-name" id="partnerName">Erin Anderson</div>
+    <div class="dance-style" id="danceStyle">Waltz</div>
+    <div class="level-tag" id="levelTag">Newcomer</div>
+    <div id="statusBadge"></div>
+  </div>
+
+  <div class="next-card" id="nextCard">
+    <div class="next-label" id="nextLabel">UP NEXT</div>
+    <div class="next-main" id="nextMain">--</div>
+    <div class="next-sub" id="nextSub">--</div>
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" onclick="step(-1)">◀ Prev</button>
+    <button class="nav-btn primary" onclick="step(1)">Next ▶</button>
+    <button class="nav-btn" onclick="jumpNow()">Now</button>
+  </div>
+
+  <div class="offset-bar" id="offsetBar">
+    <button class="mini-btn" onclick="adjustOffset(-1.5)">-1.5m</button>
+    <span id="offsetLabel">Sched: On Time</span>
+    <button class="mini-btn" onclick="adjustOffset(1.5)">+1.5m</button>
+  </div>
+
+  <details id="jumpDrawer">
+    <summary>Jump to Heat ▾</summary>
+    <div class="heat-list" id="heatList"></div>
+  </details>
+</div>
+
+<script>
+// Complete Fall Ball Showcase Schedule (#101 - Mr. Blandino-Lopez)
+const rawHeats = [
+  [1,"Waltz","Erin Anderson","Newcomer"],
+  [3,"Waltz","Laurel McDowell","Newcomer"],
+  [11,"Waltz","Natalya Yanovich","Bronze III"],
+  [12,"Quickstep","Micki Talarico","Bronze I"],
+  [15,"Viennese Waltz","Micki Talarico","Bronze III"],
+  [16,"Tango","Natalya Yanovich","Bronze III"],
+  [20,"Foxtrot","Natalya Yanovich","Bronze III"],
+  [25,"Waltz","Terra Mauro","Silver I"],
+  [27,"Peabody","Sarah Gaffen","Silver I"],
+  [30,"Tango","Janet Marrero","Silver I"],
+  [31,"Foxtrot","Jackie Marshall","Silver II"],
+  [32,"Waltz","Jackie Marshall","Silver II"],
+  [33,"Tango","Jackie Marshall","Silver II"],
+  [34,"Foxtrot","Janet McQuaid","Silver II"],
+  [35,"Viennese Waltz","Jackie Marshall","Silver II"],
+  [36,"Waltz","Janet McQuaid","Silver II"],
+  [37,"Viennese Waltz","Janet McQuaid","Silver II"],
+  [38,"Waltz","Melissa Meola","Silver II"],
+  [39,"Foxtrot","Melissa Meola","Silver II"],
+  [40,"Tango","Janet McQuaid","Silver II"],
+  [41,"Viennese Waltz","Melissa Meola","Silver II"],
+  [42,"Tango","Melissa Meola","Silver II"],
+  [43,"Waltz","Sarah Gaffen","Silver IV"],
+  [44,"Viennese Waltz","Sarah Gaffen","Silver IV"],
+  [45,"Waltz","Ann Redd","Silver IV"],
+  [46,"Tango","Sarah Gaffen","Silver IV"],
+  [47,"Foxtrot","Ann Redd","Silver IV"],
+  [48,"Viennese Waltz","April Fisher","Gold IV"],
+  [49,"Foxtrot","Sarah Gaffen","Silver IV"],
+  [50,"Viennese Waltz","Ann Redd","Silver IV"],
+  [51,"Waltz","April Fisher","Gold IV"],
+  [52,"Tango","Ann Redd","Silver IV"],
+  [53,"Foxtrot","April Fisher","Gold IV"],
+  [54,"Tango","April Fisher","Gold IV"],
+  [55,"Hustle","Laurel McDowell","Newcomer"],
+  [59,"Country Triple 2-Step","Bella Patton","Newcomer"],
+  [62,"Merengue","Diana Moses","Bronze III"],
+  [68,"Salsa","Eva Conner","Bronze II"],
+  [71,"Bachata","Diana Moses","Bronze III"],
+  [72,"Country Swing","Michelle Clark","Bronze IV"],
+  [77,"Hustle","Natalya Yanovich","Bronze III"],
+  [82,"Lindy Hop","Janet McQuaid","Silver II"],
+  [83,"Bachata","Natalya Yanovich","Bronze III"],
+  [84,"Samba","Janet Marrero","Silver I"],
+  [90,"West Coast Swing","Janet Marrero","Silver I"],
+  [93,"Hustle","Renée Modrak","Bronze IV"],
+  [94,"Merengue","Janet McQuaid","Silver II"],
+  [98,"Hustle","Janet McQuaid","Silver II"],
+  [100,"West Coast Swing","Sarah Gaffen","Silver I"],
+  [101,"Hustle","Janet Marrero","Silver I"],
+  [102,"Bachata","Janet McQuaid","Silver II"],
+  [105,"Argentine Tango","Ann Redd","Silver IV"],
+  [106,"West Coast Swing","Janet McQuaid","Silver II"],
+  [109,"Samba","Janet McQuaid","Silver II"],
+  [110,"Argentine Tango","Ann Redd","Silver IV"],
+  [112,"Salsa","Janet McQuaid","Silver II"],
+  [113,"Hustle","Sarah Gaffen","Silver I"],
+  [115,"Tango Vals","Ann Redd","Silver IV"],
+  [119,"Rumba","Laurel McDowell","Newcomer"],
+  [120,"East Coast Swing","Erin Anderson","Newcomer"],
+  [131,"Rumba","Natalya Yanovich","Bronze III"],
+  [134,"Bolero","Natalya Yanovich","Bronze III"],
+  [135,"Rumba","Janet McQuaid","Silver II"],
+  [137,"East Coast Swing","Natalya Yanovich","Bronze III"],
+#80FF00
